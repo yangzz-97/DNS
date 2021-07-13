@@ -1,0 +1,44 @@
+1、缓存名称服务器的作用
+缓存名称服务器在本地缓存中存储DNS查询结果，并且在TTL到期后从缓存中删除资源记录。通常配置缓存名称服务器以代表本地网络上的客户端执行查询，降低了Internet上的DNS流量，从而极大提高了DNS名称解析的效率。随着缓存的增加，缓存名称服务器从其本地缓存中回答越来越多的客户端查询，从而提高DNS性能。
+
+优点：提高本地查询的效率。随着缓存的增加，提高DNS的性能。降低DNS工作负载以及提高DNS性能。
+
+缺点：容易受到攻击，导致客户端被破坏。
+
+针对缺点的规避措施：使用DNSSEC验证来提高安全性，在客户端使用之前验证资源的真实性和完整性，从而防止客户端缓存中毒。
+
+
+2、配置方法：
+（1）安装unboud
+（2）开启unbound服务
+（3）配置要侦听的网络接口
+通常UNbound只侦听localhost网络接口。要是unbound能够作为缓存名称服务器供远程客户端使用，请使用/etc/unbound/unbound.conf的子句中的interface选项来选择要侦听的网络接口。0.0.0.0表示侦听所有的网络接口。
+（4）配置客户端访问权限
+通常unbound会拒绝来自所有客户端的递归查询。在/etc/unbound/unbound.conf的server子句中，使用access-control选项指定哪些客户端进行递归查询。
+access-control： 172.25.0.0/24 allow
+（5）配置转发
+如果缓存服务器的缓存中查询不到，通过此配置，可以将此机器作为转发机器，转发查询到dns服务器。
+在/etc/unbound/unbound.conf中，创建forward-zone子句指定将查询转发到的dns服务器。
+forward-zone：
+    name: "."
+    forward-addr：172.25.254.254
+
+（6）如果需要，可对特定未签名的区域绕过DNSSE验证
+在/etc/unbound/unbound.conf的server子句中的domain-insecure设置不进行验证 的域
+domain-insecure  example.com
+
+配置文件修改完成中，保存退出。使用unbound-checkconf命令检查语法是否存在错误。无误后重启unbound服务。
+并放行防火墙
+
+
+3、转储和加载缓存中的数据、清空缓存数据
+（1）转储：在定位DNS问题时，将缓存中的数据转储出来便于定位问题，使用命令unbound-control  dump_cache来转储缓存。
+unbound-control  dump_cache < stdout，以文本模式将缓存的数据转储到stdout
+
+（2）加载：将数据加载到缓存中，使用命令unbound-control load_cache
+
+（3）清空：在记录的资源中，TTL快要过期之前，管理员可以手动清理这些资源。使用命令 unbound-control  flush  www.example.com
+想要清楚某个域的记录：unbound-control  flush_zone  example.com
+
+4、更新本地缓存unbound配置
+使用命令unbound-trigger
