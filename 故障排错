@@ -2,7 +2,7 @@
 
 在开始故障排查之前，首先要确定正在使用的名称解析机制，而不是直接从DNS开始。glibc-common软件包提供的getent命令以及syslinux软件包提供的gethostip命令都可以用于执行名称解析。
 如果getent和gethostip的结果不同于dig命令产生的结果，那么明确表明并非DNS的问题。
-需要去查看/etc/nsswitch.conf文件，确认是否使用其他名臣解析机制
+需要去查看/etc/nsswitch.conf文件，确认是否使用其他名称解析机制
 
 排错可能的原因：
 1、网络的原因：
